@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiFE City: two campuses</title>
+    <meta
+      name="description"
+      content="A 3D energy control room for IIT Gandhinagar and Manipal University Jaipur: scrub a day, switch Mission LiFE campaigns on, and watch the campus change."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230E1220'/%3E%3Crect x='8' y='9' width='7' height='15' fill='%23E0A93B'/%3E%3Crect x='17' y='15' width='7' height='9' fill='%237FB2E5'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,400;1,500&family=Spline+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="stage" id="stageA"><canvas id="cvA"></canvas></div>
+      <div class="stage" id="stageB"><canvas id="cvB"></canvas></div>
+      <div id="pick"></div>
+      <div id="labels"></div>
+      <div id="divider">
+        <button id="grip" aria-label="Drag to compare the two campuses"></button
+        ><span class="cap l">If nobody changes</span><span class="cap r">With Mission LiFE</span>
+      </div>
+      <div id="vig"></div>
+      <div id="grain"></div>
+      <div id="story" hidden></div>
+      <div id="banner" hidden>Database unreachable. Serving the last cached snapshot.</div>
+      <div id="hud">
+        <header class="glass top">
+          <div class="brand">LiFE City<em>Mission control</em></div>
+          <label class="field" style="width: 280px; margin-left: 6px"
+            ><span class="lbl" style="display: none">Campus</span
+            ><select id="campusSel" aria-label="Campus"></select
+          ></label>
+          <div class="sp"></div>
+          <span class="chip static hide-sm" id="chipHealth"><i class="dot ok"></i>All services normal</span>
+          <span class="chip static hide-sm hide-md mono" id="chipFps">-- fps</span>
+          <span class="note hide-sm hide-md">A mockup. The telemetry is simulated.</span>
+          <button class="btn pri" id="btnStory">Play the story</button>
+          <div class="seg" id="views" role="group" aria-label="Camera views">
+            <button data-v="home" class="on">Overview</button><button data-v="hostels">Hostels</button
+            ><button data-v="quad">Core</button><button data-v="util">Utilities</button>
+          </div>
+        </header>
+
+        <aside class="glass side left" id="left">
+          <div class="tabs" data-group="left" role="tablist">
+            <button data-tab="assets" class="on" role="tab">Assets</button
+            ><button data-tab="layers" role="tab">Layers</button
+            ><button data-tab="scen" role="tab">Scenarios</button
+            ><button data-tab="hood" role="tab">Ranking</button>
+          </div>
+          <div class="pane on" id="p-assets">
+            <div class="search">
+              <input
+                type="text"
+                id="q"
+                placeholder="Search assets by name"
+                aria-label="Search assets by name"
+              />
+              <select id="kindSel" aria-label="Filter by archetype"></select>
+              <select id="sortSel" aria-label="Sort assets">
+                <option value="load">Sort: heaviest first</option>
+                <option value="saved">Sort: saved vs baseline</option>
+                <option value="name">Sort: name</option>
+              </select>
+            </div>
+            <div class="vlist" id="alist">
+              <div id="aspacer"><div id="arows"></div></div>
+            </div>
+            <div class="foot">
+              <span id="afoot1">0 assets</span><span id="afoot2" class="mono">0 measured</span>
+            </div>
+          </div>
+          <div class="pane" id="p-layers">
+            <div id="layerList"></div>
+            <div class="card">
+              <span class="lbl">How to read the map</span>
+              <div class="foot" style="display: block; line-height: 1.55">
+                Lit windows show how much energy a building is using. Roof and ground colour show how
+                carbon-heavy the grid is at that hour.
+              </div>
+              <div class="legend">
+                <span style="--c: #6fa8dc">cleaner grid</span><span style="--c: #e0a93b">mixed</span
+                ><span style="--c: #c8452b">carbon-heavy</span>
+              </div>
+              <div class="row">
+                <span class="dot meas"></span
+                ><span style="flex: 1; margin-left: -4px">Solid outline: has readings</span
+                ><span class="dot mod"></span><span style="flex: 1; margin-left: -4px">Dashed: modelled</span>
+              </div>
+            </div>
+          </div>
+          <div class="pane" id="p-hood">
+            <div class="row" style="justify-content: flex-start; gap: 14px">
+              <svg
+                id="vitRing"
+                width="76"
+                height="76"
+                viewBox="0 0 76 76"
+                role="img"
+                aria-label="Campus vitality ring"
+              ></svg>
+              <div>
+                <span class="lbl">Campus vitality</span>
+                <div class="big" id="vitNum">0</div>
+              </div>
+            </div>
+            <div class="foot" id="vitNote" style="display: block"></div>
+            <span class="lbl">Neighbourhoods, ranked by what they actually saved</span>
+            <div id="hoodList"></div>
+            <div class="foot" style="display: block; line-height: 1.55">
+              Saved is the cut a neighbourhood would get if everyone joined, times the share actually taking
+              part, so small and large neighbourhoods compete fairly. Participation and streaks here are made
+              up.
+            </div>
+          </div>
+          <div class="pane" id="p-scen">
+            <span class="lbl">Mission LiFE campaigns (energy theme)</span>
+            <div id="campList"></div>
+            <div class="row">
+              <button class="btn pri" id="btnSave">Save scenario</button
+              ><span class="foot" id="scenNote"></span>
+            </div>
+            <div id="savedList" class="feed"></div>
+          </div>
+        </aside>
+
+        <p class="credit">
+          Positions are real OpenStreetMap data. Manipal Jaipur has real outlines; IIT Gandhinagar buildings
+          are placeholder boxes at their real positions. Heights, uses and loads are placeholders
+          everywhere.<br /><span class="keys"
+            >Space plays the day · ← → scrub · 1 to 5 toggle campaigns · Esc lets go</span
+          >
+        </p>
+        <aside class="glass side right" id="right">
+          <div class="tabs" data-group="right" role="tablist">
+            <button data-tab="insp" class="on" role="tab">Inspector</button
+            ><button data-tab="cit" role="tab">Citizen</button
+            ><button data-tab="add" role="tab">Add building</button
+            ><button data-tab="sys" role="tab">System</button><button data-tab="ev" role="tab">Events</button>
+          </div>
+          <div class="pane on" id="p-insp"></div>
+          <div class="pane" id="p-cit"></div>
+          <div class="pane" id="p-add">
+            <span class="lbl">New building</span>
+            <div class="field">
+              <label for="fName" class="lbl">Name</label
+              ><input type="text" id="fName" value="Research block" />
+            </div>
+            <div class="two">
+              <div class="field">
+                <label for="fArch" class="lbl">Archetype</label
+                ><select id="fArch"></select>
+              </div>
+              <div class="field">
+                <label for="fFloors" class="lbl">Floors</label
+                ><input type="number" id="fFloors" value="5" min="1" max="40" />
+              </div>
+              <div class="field">
+                <label for="fW" class="lbl">Width (m)</label
+                ><input type="number" id="fW" value="36" min="8" max="120" />
+              </div>
+              <div class="field">
+                <label for="fD" class="lbl">Depth (m)</label
+                ><input type="number" id="fD" value="24" min="8" max="120" />
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn" id="btnPlace">Pick position on map</button
+              ><span class="mono" id="posOut">no position</span>
+            </div>
+            <div class="err" id="addErr"></div>
+            <button class="btn pri" id="btnAdd">Add to registry</button>
+            <div class="card">
+              <span class="lbl">When you add it</span>
+              <div class="foot" style="display: block; line-height: 1.7">
+                1. A row goes into the asset registry<br />2. Only this building is simulated<br />3. Cached
+                campus totals change by its share<br />4. One more building is added to the graphics buffer<br />5.
+                An event is written to the log
+              </div>
+            </div>
+            <span class="lbl">Scale test</span>
+            <div class="row" style="gap: 6px; justify-content: flex-start">
+              <button class="btn" data-scale="100">+100</button
+              ><button class="btn" data-scale="500">+500</button
+              ><button class="btn" data-scale="2000">+2,000</button>
+            </div>
+            <div class="card" id="scaleOut">
+              <span class="foot"
+                >Adds generated buildings through the same path a real one takes. The timings that appear here
+                are measured live in this page.</span
+              >
+            </div>
+          </div>
+          <div class="pane" id="p-sys">
+            <div class="svc" id="svcGrid"></div>
+            <div class="card">
+              <span class="lbl">Service map</span
+              ><svg
+                class="arch"
+                viewBox="0 0 320 178"
+                role="img"
+                aria-label="Service map: web app to API to cache, simulation workers and Postgres, with an ingestion service fed by meters"
+              >
+                <title>Web, API, cache, workers, database, ingestion and meters</title>
+                <g id="archG"></g>
+              </svg>
+            </div>
+            <div class="row">
+              <button class="btn warn" id="btnChaos">Simulate database outage</button
+              ><span class="foot" id="chaosNote">Running normally</span>
+            </div>
+            <div class="card" id="renderStats"></div>
+          </div>
+          <div class="pane" id="p-ev">
+            <div
+              class="row"
+              style="justify-content: flex-start; flex-wrap: wrap; gap: 6px"
+              id="evFilters"
+            ></div>
+            <div class="feed" id="evFeed"></div>
+          </div>
+        </aside>
+
+        <section class="glass dock">
+          <div class="transport">
+            <div>
+              <span class="lbl">Local time</span><output id="clock">19:30</output>
+              <div class="presets" id="presets"></div>
+            </div>
+            <div class="row" style="justify-content: flex-start; gap: 8px">
+              <button class="btn round pri" id="play" aria-label="Play the day">
+                <svg viewBox="0 0 16 16"><path id="playIcon" d="M5 3l8 5-8 5z" /></svg>
+              </button>
+              <div class="seg" id="daySeg">
+                <button data-d="weekday" class="on">Weekday</button><button data-d="weekend">Weekend</button>
+              </div>
+            </div>
+          </div>
+          <div class="plotwrap">
+            <div class="chips" id="chips"></div>
+            <canvas id="chart" aria-label="Campus load across the day with carbon intensity strip"></canvas>
+          </div>
+          <div class="tiles" id="tiles"></div>
+        </section>
+      </div>
+      <div id="toast"></div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"
+      integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+      integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"
+      integrity="sha384-nhO9toQuMo5osCuA0l+YFpSqscZWxDu251Bnho2gD3kSPv1neEwHg0LyEmrA+mPj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"
+      integrity="sha384-mY+ii969jnDCI2HjRHftH2NZVkIO5ZGUkcnGCg3oVJ3kVstWQXwerYWBg+nbUG4R"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"
+      integrity="sha384-GkidzTYmQg24v13sa3xhBBbvOLbVLO1QxfyKLdOWweQqNqS/iWwUst2T1fER2Xrg"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"
+      integrity="sha384-2EpLreWSFuZsk4hcSplXLhlHd/wzvDNF907bTGIXSXM0SlhJNzy4YK0DhBFvkFEs"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"
+      integrity="sha384-I3lsvPeDJYFrEAzn/TA0yhc/SCYKwpyfyq8lKzHYKohu43H9f7xc/Q9ZWgSVUDl3"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"
+      integrity="sha384-aVQ2QnWkoxhOefDB0YZB64OPVzujvccydpcC7UqMDJUK0ChwA382zOHmrWHGDRRa"
+      crossorigin="anonymous"
+    ></script>
+    <script src="data/assets.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

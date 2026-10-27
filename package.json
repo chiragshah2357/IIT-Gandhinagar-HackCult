@@ -1,0 +1,16 @@
+{
+  "name": "lifecity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LiFE City: a 3D energy control room for two campuses (HackCult '26, Track 1)",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "format": "prettier --write web scripts",
+    "format:check": "prettier --check web scripts",
+    "test": "npm run check && npm run format:check"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}
