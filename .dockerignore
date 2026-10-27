@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/__pycache__
+**/*.pyc
+api/.venv
+api/tests
+api/.pytest_cache
+api/.ruff_cache
+api/.mypy_cache
+docs
+.env
