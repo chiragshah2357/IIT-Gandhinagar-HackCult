@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiFE City</title>
+    <meta
+      name="description"
+      content="A living 3D energy map of IIT Gandhinagar and Manipal University Jaipur, built around Mission LiFE. The problem, the idea, the system and how we planned it."
+    />
+    <meta name="theme-color" content="#0e1220" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230E1220'/%3E%3Crect x='8' y='9' width='7' height='15' fill='%23E0A93B'/%3E%3Crect x='17' y='15' width='7' height='9' fill='%237FB2E5'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,400;1,500&family=Spline+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="landing/landing.css" />
+  </head>
+  <body data-time="night">
+    <a class="skip" href="#main">Skip to the content</a>
+
+    <header class="bar">
+      <a class="bar__brand" href="#top">LiFE City</a>
+      <nav class="bar__nav" aria-label="Sections">
+        <a href="#problem">Problem</a>
+        <a href="#idea">Idea</a>
+        <a href="#system">System</a>
+        <a href="#plan">Plan</a>
+        <a href="#real">What is real</a>
+        <a href="#next">Next</a>
+      </nav>
+      <span class="bar__clock" aria-hidden="true"><span id="clock">00:00</span></span>
+      <a class="btn btn--small" href="app/">Open the control room</a>
+    </header>
+
+    <div class="rail" aria-hidden="true">
+      <div class="rail__track" id="railTrack"></div>
+      <div class="rail__mark" id="railMark"></div>
+      <span class="rail__tick" style="top: 0">00</span>
+      <span class="rail__tick" style="top: 25%">06</span>
+      <span class="rail__tick" style="top: 50%">12</span>
+      <span class="rail__tick" style="top: 75%">18</span>
+      <span class="rail__tick" style="top: 100%">24</span>
+    </div>
+
+    <main id="main">
+      <!-- Hero: night -->
+      <section class="hero t-night" id="top" data-hour="0" aria-labelledby="hero-title">
+        <div class="hero__scene" data-scene>
+          <img
+            class="hero__still"
+            src="landing/img/hero-still.jpg"
+            alt=""
+            width="800"
+            height="600"
+            fetchpriority="high"
+          />
+        </div>
+        <div class="hero__scrim"></div>
+        <div class="wrap hero__body">
+          <p class="eyebrow">HackCult '26 · IIT Gandhinagar · Track 1, Green Energy and Sustainability</p>
+          <h1 id="hero-title">Small habits, added up, building by building.</h1>
+          <p class="lead">
+            LiFE City is a 3D energy map of two campuses. Drag through a day, switch on Mission LiFE habits,
+            and watch a campus where nobody changed sit beside one where everyone did.
+          </p>
+          <p class="actions">
+            <a class="btn" href="app/">Open the control room</a>
+            <a class="btn btn--ghost" href="#problem">How we built it</a>
+          </p>
+        </div>
+        <p class="hero__caption mono">Manipal University Jaipur, from its real footprints, playing a day</p>
+      </section>
+
+      <p class="status t-night">
+        <span class="status__label mono">Where it stands</span>
+        <span
+          >The front end runs. Loads are modelled, not metered. The backend is designed, not built.
+          <a href="#real">What is real and what is not</a></span
+        >
+      </p>
+
+      <!-- Problem: dawn -->
+      <section class="sec t-dawn" id="problem" data-hour="5.8" aria-labelledby="problem-title">
+        <div class="wrap">
+          <p class="sec__meta mono"><span>05:50</span> Dawn · The problem</p>
+          <h2 id="problem-title" class="reveal">
+            A campus has hundreds of buildings and one electricity bill.
+          </h2>
+          <p class="lead reveal">
+            Nobody can say which building used what, or when. We looked for public building-level or hourly
+            figures for IIT Gandhinagar and Manipal University Jaipur and found none. What people have is a
+            campus total and good intentions.
+          </p>
+
+          <div class="cols3">
+            <article class="reveal">
+              <h3>Habits never meet their results</h3>
+              <p>
+                Mission LiFE asks for small, specific changes: 75 individual actions across seven themes.
+                Switching off a fan feels like nothing, because nobody sees where the energy went.
+              </p>
+            </article>
+            <article class="reveal">
+              <h3>When matters as much as how much</h3>
+              <p>
+                Evening demand arrives after the sun has gone. A unit saved at the evening peak usually avoids
+                more carbon than one saved at noon, so counting kilowatt-hours alone misses half the story.
+              </p>
+            </article>
+            <article class="reveal">
+              <h3>Savings are easy to claim</h3>
+              <p>
+                Anyone can say a campaign worked. Showing it means comparing against what would have happened
+                anyway, and being plain about which numbers are measured and which are guessed.
+              </p>
+            </article>
+          </div>
+
+          <dl class="figures reveal">
+            <div>
+              <dt class="mono">80 to 90%</dt>
+              <dd>
+                of IIT Gandhinagar's energy goes to academic areas, hostels and chiller plants.
+                <span class="chip chip--reported">Reported</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="mono">About 10%</dt>
+              <dd>
+                of its demand is met by on-site solar, around 500 kWp.
+                <span class="chip chip--reported">Reported</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="mono">75 · 7</dt>
+              <dd>
+                Mission LiFE individual actions, and the themes they sit in.
+                <span class="chip chip--real">MoEFCC</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="mono">0</dt>
+              <dd>
+                public building-level or hourly meter figures found for either campus.
+                <span class="chip chip--real">Our search</span>
+              </dd>
+            </div>
+          </dl>
+          <p class="note reveal">
+            Reported figures come from secondary sources and were not read at the original. The list of
+            sources, and what is still unchecked, is in
+            <a
+              href="https://github.com/chiragshah2357/IIT-Gandhinagar-HackCult/blob/main/docs/data-and-sources.md"
+              >data and sources</a
+            >.
+          </p>
+        </div>
+      </section>
+
+      <!-- Idea: morning -->
+      <section class="sec t-noon" id="idea" data-hour="9.5" aria-labelledby="idea-title">
+        <div class="wrap">
+          <p class="sec__meta mono"><span>09:30</span> Morning · The idea</p>
+          <h2 id="idea-title" class="reveal">Make the campus visible. Then make it playable.</h2>
+          <p class="lead reveal">
+            LiFE City draws every building as a lit block on a night map. The brightness of its windows is how
+            much energy it is using. Drag the clock and a day plays out: the hostels wake at dawn, teaching
+            blocks peak by midday, and the whole campus leans on the grid at dusk. All of it comes from our
+            model, and the page says so.
+          </p>
+
+          <div class="feature reveal">
+            <div class="feature__text">
+              <h3>Windows tell the load</h3>
+              <p>
+                Lit windows follow each building's load. Roofs and ground take their colour from the grid:
+                clean blue, then ochre, then madder as it gets heavier on carbon.
+              </p>
+              <p>
+                Two campuses share one map. A dropdown filters every number, the ranking and the citizen view
+                to one of them.
+              </p>
+            </div>
+            <div class="feature__pics">
+              <figure>
+                <img
+                  src="landing/img/manipal-jaipur.jpg"
+                  alt="Manipal University Jaipur at the evening peak: lit blocks drawn from real footprints on a dark ground."
+                  width="800"
+                  height="631"
+                  loading="lazy"
+                />
+                <figcaption>Manipal University Jaipur at the evening peak, from real footprints.</figcaption>
+              </figure>
+              <figure>
+                <img
+                  src="landing/img/iit-gandhinagar.jpg"
+                  alt="IIT Gandhinagar: placeholder boxes at real positions with the chiller plant, solar carport and substation labelled."
+                  width="800"
+                  height="631"
+                  loading="lazy"
+                />
+                <figcaption>
+                  IIT Gandhinagar: boxes at real positions, with the plant and solar labelled.
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="feature feature--flip reveal">
+            <div class="feature__text">
+              <h3>A ghost campus beside the real one</h3>
+              <p>
+                Switch campaigns on and the screen splits. On the left nobody changed. On the right everyone
+                did. Drag the divider and see where the difference lands, building by building and hour by
+                hour.
+              </p>
+            </div>
+            <figure class="feature__pics feature__pics--one">
+              <img
+                src="landing/img/ghost-campus.jpg"
+                alt="The split view at 19:30: the left half keeps its lights on, the right half with Mission LiFE campaigns shows dimmer windows."
+                width="800"
+                height="600"
+                loading="lazy"
+              />
+              <figcaption>The split at 19:30. Left, nobody changed. Right, all five habits on.</figcaption>
+            </figure>
+          </div>
+
+          <h3 class="block-title reveal">Five habits from Mission LiFE's energy theme</h3>
+          <div class="tablewrap reveal">
+            <table>
+              <caption class="sr">
+                The five campaigns, what each changes in the model, and its modelled effect range
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Habit</th>
+                  <th scope="col">What it changes in the model</th>
+                  <th scope="col">Modelled effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Set it to 26</th>
+                  <td>Air-conditioning setpoints, and the chilled-water setpoint at the plant.</td>
+                  <td>Cooling down 9 to 20%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Lights and fans off</th>
+                  <td>Lighting in empty rooms and corridors.</td>
+                  <td>Down 10 to 25% in teaching buildings, 6 to 16% in hostels and homes</td>
+                </tr>
+                <tr>
+                  <th scope="row">Shift the peak</th>
+                  <td>Geyser use, moved out of the evening carbon peak.</td>
+                  <td>10 to 26% of water heating moved to midday</td>
+                </tr>
+                <tr>
+                  <th scope="row">Standby purge</th>
+                  <td>Idle chargers, TVs and computers.</td>
+                  <td>Plug loads down 3 to 9%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Efficient swap</th>
+                  <td>Old ACs and fans replaced by star-rated ones. The old units become e-waste.</td>
+                  <td>Cooling down 4 to 12%, lighting 4 to 10%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note reveal">
+            <span class="chip chip--placeholder">Placeholder</span> These ranges are low, mid and high cases
+            we chose. The next step is to tie each habit to its official Mission LiFE action and a cited
+            effect size.
+          </p>
+
+          <div class="cols2">
+            <article class="reveal">
+              <h3>Honest about what it knows</h3>
+              <p>
+                A solid outline marks a building with readings. A dashed outline marks one we modelled. Today
+                almost every building is dashed, and the map shows it. As real readings arrive, buildings turn
+                solid.
+              </p>
+            </article>
+            <article class="reveal">
+              <h3>A fair ranking, and a citizen's view</h3>
+              <p>
+                Neighbourhoods are scored by what they would save times the share of people who take part, so
+                a small hostel can beat a big one. The citizen view is one resident's phone: tick the habits
+                you did and the campus responds.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- System: noon -->
+      <section class="sec sec--tight t-noon" id="system" data-hour="13" aria-labelledby="system-title">
+        <div class="wrap">
+          <p class="sec__meta mono"><span>13:00</span> Noon · The system</p>
+          <h2 id="system-title" class="reveal">The world is data. The code only knows kinds.</h2>
+          <p class="lead reveal">
+            A building is a row. A building type is a row. A campaign is a row. Adding a block, a new kind of
+            building or a whole campus is new data, not a new release. Adding Manipal University Jaipur proved
+            it: 124 rows and one entry.
+          </p>
+
+          <h3 class="block-title reveal">What it takes to change the campus</h3>
+          <div class="tablewrap reveal">
+            <table>
+              <caption class="sr">
+                Ways the campus can change, how each is added, what recomputes and how much code changes
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Change</th>
+                  <th scope="col">How it is added</th>
+                  <th scope="col">What recomputes</th>
+                  <th scope="col">Code changed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">A new building</th>
+                  <td>Insert a registry row. The Add building tab does exactly this.</td>
+                  <td>That building only; campus totals by delta</td>
+                  <td>None</td>
+                </tr>
+                <tr>
+                  <th scope="row">A new building type</th>
+                  <td>Add an archetype: kW density, component mix, hourly shapes.</td>
+                  <td>Buildings of that type</td>
+                  <td>None</td>
+                </tr>
+                <tr>
+                  <th scope="row">A new campaign</th>
+                  <td>Add an entry: target types, component, low, mid and high cut, time profile.</td>
+                  <td>Scenario totals, when asked for</td>
+                  <td>None</td>
+                </tr>
+                <tr>
+                  <th scope="row">A new campus</th>
+                  <td>Add a campus entry and rows tagged with its id.</td>
+                  <td>That campus</td>
+                  <td>None</td>
+                </tr>
+                <tr>
+                  <th scope="row">A renovation</th>
+                  <td>Bump the building's revision.</td>
+                  <td>That building's cache entry</td>
+                  <td>None</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="diagram reveal">
+            <h3 class="block-title">As built: the front end</h3>
+            <div class="diagram__scroll">
+              <svg
+                viewBox="0 0 960 322"
+                role="img"
+                aria-labelledby="d1-title d1-desc"
+                class="dgm"
+                data-diagram="built"
+              >
+                <title id="d1-title">The front end as built</title>
+                <desc id="d1-desc">
+                  A seed table of 190 buildings feeds the asset registry. The registry and a model library
+                  feed a per-building simulation. The simulation fills a load texture and feeds the counters,
+                  chart and ranking. The registry also builds the footprint meshes. The texture and the meshes
+                  feed two views of one scene, one where nobody changes and one with Mission LiFE.
+                </desc>
+                <defs>
+                  <marker
+                    id="arr"
+                    viewBox="0 0 10 10"
+                    refX="9"
+                    refY="5"
+                    markerWidth="7"
+                    markerHeight="7"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M0 0 L10 5 L0 10 z" class="dgm__arrow" />
+                  </marker>
+                </defs>
+                <g class="dgm__edges">
+                  <path d="M166 150 C190 150 190 88 210 88" />
+                  <path d="M360 88 C384 88 384 40 404 40" />
+                  <path d="M360 100 C382 100 382 156 404 156" />
+                  <path d="M360 208 C382 208 382 196 404 196" />
+                  <path d="M574 174 H618" />
+                  <path d="M574 40 C760 40 780 104 812 104" />
+                  <path d="M768 174 C790 174 790 172 812 172" />
+                  <path d="M489 216 V252" />
+                </g>
+                <g class="dgm__nodes">
+                  <g transform="translate(16 118)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Seed table</text>
+                    <text x="12" y="46" class="dgm__s">190 buildings, 2 campuses</text>
+                  </g>
+                  <g transform="translate(210 56)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Asset registry</text>
+                    <text x="12" y="46" class="dgm__s">one row per building</text>
+                  </g>
+                  <g transform="translate(210 176)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Model library</text>
+                    <text x="12" y="46" class="dgm__s">types, shapes, campaigns</text>
+                  </g>
+                  <g transform="translate(404 12)">
+                    <rect width="170" height="56" />
+                    <text x="12" y="26" class="dgm__t">Footprints</text>
+                    <text x="12" y="44" class="dgm__s">one merged mesh</text>
+                  </g>
+                  <g transform="translate(404 132)">
+                    <rect width="170" height="84" />
+                    <text x="12" y="28" class="dgm__t">Simulation</text>
+                    <text x="12" y="48" class="dgm__s">pure per building,</text>
+                    <text x="12" y="64" class="dgm__s">memoised, delta totals</text>
+                  </g>
+                  <g transform="translate(404 252)">
+                    <rect width="170" height="56" />
+                    <text x="12" y="26" class="dgm__t">Counters and ranking</text>
+                    <text x="12" y="44" class="dgm__s">chart, citizen view</text>
+                  </g>
+                  <g transform="translate(618 132)">
+                    <rect width="150" height="84" />
+                    <text x="12" y="28" class="dgm__t">Load texture</text>
+                    <text x="12" y="48" class="dgm__s">building by hour,</text>
+                    <text x="12" y="64" class="dgm__s">on the graphics card</text>
+                  </g>
+                  <g transform="translate(812 60)">
+                    <rect width="140" height="160" class="dgm__hot" />
+                    <text x="12" y="30" class="dgm__t">Two views</text>
+                    <text x="12" y="50" class="dgm__s">of one scene</text>
+                    <text x="12" y="92" class="dgm__s">If nobody changes</text>
+                    <text x="12" y="112" class="dgm__s">With Mission LiFE</text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <figcaption>
+              Everything here runs in the browser. Each building's load for each hour sits in a texture on the
+              graphics card, so dragging the clock changes one number and no geometry.
+            </figcaption>
+          </figure>
+
+          <h3 class="block-title reveal">One run, reported plainly</h3>
+          <div class="scale reveal">
+            <p>
+              On 25 October 2026 we added 500 generated buildings to the 190 seeded, 690 in all, in a
+              software-rendered browser.
+            </p>
+            <dl class="scale__list">
+              <div>
+                <dt>500 rows into the registry</dt>
+                <dd class="mono">8.1 ms</dd>
+              </div>
+              <div>
+                <dt>One more building from there</dt>
+                <dd class="mono">0.58 ms</dd>
+              </div>
+              <div>
+                <dt>Starting over, same scenario</dt>
+                <dd class="mono">101 ms</dd>
+              </div>
+              <div>
+                <dt>Graphics table</dt>
+                <dd class="mono">1,024 slots</dd>
+              </div>
+            </dl>
+            <p class="note">
+              A single run on a slow renderer, and not a benchmark. It supports one claim. The cost of a
+              change follows what changed, and does not grow with the size of the campus.
+            </p>
+          </div>
+
+          <figure class="diagram reveal">
+            <h3 class="block-title">
+              As designed: the service behind it <span class="chip chip--planned">Planned</span>
+            </h3>
+            <div class="diagram__scroll">
+              <svg
+                viewBox="0 0 960 322"
+                role="img"
+                aria-labelledby="d2-title d2-desc"
+                class="dgm dgm--planned"
+                data-diagram="planned"
+              >
+                <title id="d2-title">The planned service</title>
+                <desc id="d2-desc">
+                  The web app talks to a FastAPI service. The API calls a cached simulation engine and reads
+                  and writes Postgres. An ingestion service takes batch and CSV readings, fed by a meter
+                  simulator, and writes to Postgres. A worker computes baselines and verified savings from
+                  Postgres.
+                </desc>
+                <g class="dgm__edges">
+                  <path d="M166 150 H240" />
+                  <path d="M410 134 C440 134 440 56 470 56" />
+                  <path d="M410 150 H680" />
+                  <path d="M600 226 C600 204 738 212 744 182" />
+                  <path d="M680 258 H640" />
+                  <path d="M755 88 V118" />
+                </g>
+                <g class="dgm__nodes">
+                  <g transform="translate(16 118)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Web app</text>
+                    <text x="12" y="46" class="dgm__s">this front end</text>
+                  </g>
+                  <g transform="translate(240 118)">
+                    <rect width="170" height="64" />
+                    <text x="12" y="26" class="dgm__t">FastAPI</text>
+                    <text x="12" y="46" class="dgm__s">auth, buildings, simulate</text>
+                  </g>
+                  <g transform="translate(470 24)">
+                    <rect width="170" height="64" />
+                    <text x="12" y="26" class="dgm__t">Simulation</text>
+                    <text x="12" y="46" class="dgm__s">cached, server-side</text>
+                  </g>
+                  <g transform="translate(680 118)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Postgres</text>
+                    <text x="12" y="46" class="dgm__s">campus id as tenant</text>
+                  </g>
+                  <g transform="translate(680 24)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Worker</text>
+                    <text x="12" y="46" class="dgm__s">baselines, savings</text>
+                  </g>
+                  <g transform="translate(470 226)">
+                    <rect width="170" height="64" />
+                    <text x="12" y="26" class="dgm__t">Ingestion</text>
+                    <text x="12" y="46" class="dgm__s">batch and CSV, idempotent</text>
+                  </g>
+                  <g transform="translate(680 226)">
+                    <rect width="150" height="64" />
+                    <text x="12" y="26" class="dgm__t">Meter simulator</text>
+                    <text x="12" y="46" class="dgm__s">posts modelled readings</text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <figcaption>
+              Nothing in this picture is built yet. It is the design that lets a visitor's input change the
+              campus: a typed API, a real database, cached simulation, and ingestion keyed so that a retried
+              upload cannot count twice.
+            </figcaption>
+          </figure>
+
+          <div class="cols2">
+            <article class="reveal">
+              <h3>The database, as designed</h3>
+              <p class="mono small">
+                campuses · neighbourhoods · buildings · meters · readings · baselines · actions · user_actions
+                · verified_savings · scenarios
+              </p>
+              <p>
+                Readings are unique per meter and time, and partitioned by month. Every action carries a
+                theme, so water or waste becomes a row and not a rewrite. Verified savings compare a baseline
+                with what was read, and report an interval.
+              </p>
+            </article>
+            <article class="reveal">
+              <h3>When something fails</h3>
+              <p>
+                If the database is down, serve the last cached campus snapshot and say so on screen. Ingestion
+                keys make retries safe. Outside calls get timeouts and a cached fallback. Rate and size limits
+                guard every input. The prototype's outage toggle shows what a visitor would see.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Plan: evening peak -->
+      <section class="sec t-eve" id="plan" data-hour="19.5" aria-labelledby="plan-title">
+        <div class="wrap">
+          <p class="sec__meta mono"><span>19:30</span> Evening peak · How we planned it</p>
+          <h2 id="plan-title" class="reveal">
+            We read the rules first, then let the judging weights decide where the hours go.
+          </h2>
+          <p class="lead reveal">
+            Before drawing anything we read what the organisers published: what is scored, how much, and what
+            the finale needs. That changed the plan more than any idea did.
+          </p>
+
+          <div class="tablewrap reveal">
+            <table class="weights">
+              <caption class="sr">
+                The first-round judging criteria, their weights, what we did about each and where it stands
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Criterion</th>
+                  <th scope="col">Weight</th>
+                  <th scope="col">What we did about it</th>
+                  <th scope="col">Today</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Technical execution and code quality</th>
+                  <td><span class="bar-w" style="--w: 40%"></span><span class="mono">40%</span></td>
+                  <td>
+                    Static checks and a format check on every pull request. Small commits with real messages.
+                  </td>
+                  <td>
+                    <span class="chip chip--real">Front end done</span>
+                    <span class="chip chip--planned">Backend tests planned</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">System architecture and scalability</th>
+                  <td><span class="bar-w" style="--w: 30%"></span><span class="mono">30%</span></td>
+                  <td>
+                    A data-driven registry, memoised simulation with delta totals, a scale test in the page, a
+                    service designed on paper.
+                  </td>
+                  <td>
+                    <span class="chip chip--real">Prototype done</span>
+                    <span class="chip chip--planned">Load test planned</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">UI and UX</th>
+                  <td><span class="bar-w" style="--w: 20%"></span><span class="mono">20%</span></td>
+                  <td>
+                    The 3D control room, two campuses, a citizen view, states for failure and for an outage.
+                  </td>
+                  <td><span class="chip chip--real">Prototype done</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Innovation and problem fit</th>
+                  <td><span class="bar-w" style="--w: 10%"></span><span class="mono">10%</span></td>
+                  <td>
+                    The ghost campus. A map that says what is measured and what is modelled. Mission LiFE
+                    energy actions as the campaigns.
+                  </td>
+                  <td><span class="chip chip--real">Prototype done</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note reveal">
+            The rules also describe a booth round for finalists. It weighs a live system 35%, code integrity
+            25%, architectural depth 25% and domain fit 15%, and asks for a deployed app taking real input. A
+            live system is the part we do not have yet.
+          </p>
+
+          <h3 class="block-title reveal">The decisions, in order</h3>
+          <ol class="timeline reveal">
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Chose the track</h4>
+                <p>Green Energy and Sustainability, over Culture and Digital Heritage.</p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Threw out the plain dashboard</h4>
+                <p>
+                  A bill-to-actions screen was too simple. It was a calculator with a chart. The visuals had
+                  to carry the idea, so the plan became a living 3D campus.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Read the full rules and rewrote the plan</h4>
+                <p>
+                  Plan one was static data and no backend. The rules ask for a live deployed system, real
+                  inputs, and a defence of the database, the API and security. Plan two designs a real
+                  service, gives engineering most of the hours, and keeps the scene as the hero.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Rebuilt the mock-up as a control room</h4>
+                <p>
+                  An asset registry, an add-a-building flow, a scale test and a system view, so that more
+                  buildings later is a data change and not a rewrite.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Dropped the glassy neon look</h4>
+                <p>
+                  Replaced it with a survey sheet drawn at night: flat ruled panels, lamp-lit windows, and
+                  colours taken from sandstone and madder.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Found our first layout was wrong</h4>
+                <p>
+                  We had drawn IIT Gandhinagar's Blocks 01 to 29 as academic. Checked against OpenStreetMap
+                  they sit along the east side and look residential. We rebuilt on real positions.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-22">22 Oct</time>
+              <div>
+                <h4>Added a second campus</h4>
+                <p>
+                  Manipal University Jaipur, from its real footprints, behind one dropdown. A new campus
+                  really is data.
+                </p>
+              </div>
+            </li>
+            <li>
+              <time datetime="2026-10-25">25 Oct</time>
+              <div>
+                <h4>Published the repository</h4>
+                <p>
+                  Split the page into files, added checks and CI. Merging the campuses exposed a graphics
+                  buffer bug once there were more than 128 buildings. We found it and fixed it.
+                </p>
+              </div>
+            </li>
+          </ol>
+          <p class="note reveal">
+            The first seven entries happened before the sprint window opened on 23 October at 6:30 PM IST.
+          </p>
+        </div>
+      </section>
+
+      <!-- What is real: night -->
+      <section class="sec t-late" id="real" data-hour="22.3" aria-labelledby="real-title">
+        <div class="wrap">
+          <p class="sec__meta mono"><span>22:20</span> Night · What is real</p>
+          <h2 id="real-title" class="reveal">What is real, what is modelled, what is made up.</h2>
+          <p class="lead reveal">
+            We would rather you hear it from us. Every number on the map falls into one of these rows.
+          </p>
+          <div class="tablewrap reveal">
+            <table>
+              <caption class="sr">
+                Each kind of data in the prototype, its status and a detail
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">What</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Building positions, both campuses</th>
+                  <td><span class="chip chip--real">Real</span></td>
+                  <td>OpenStreetMap, read on 22 October 2026.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Manipal Jaipur outlines</th>
+                  <td><span class="chip chip--real">Real</span></td>
+                  <td>OpenStreetMap footprints. 83 of the 124 buildings have no name there.</td>
+                </tr>
+                <tr>
+                  <th scope="row">IIT Gandhinagar shapes</th>
+                  <td><span class="chip chip--placeholder">Placeholder</span></td>
+                  <td>
+                    Boxes at the real positions. The chiller plant, solar carport and substation are labelled
+                    guesses.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Heights, floors, uses</th>
+                  <td><span class="chip chip--placeholder">Placeholder</span></td>
+                  <td>Chosen to look plausible. Not surveyed.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Every load and kW figure</th>
+                  <td><span class="chip chip--modelled">Modelled</span></td>
+                  <td>From building-type profiles. There is no meter data for either campus.</td>
+                </tr>
+                <tr>
+                  <th scope="row">The six "measured" buildings</th>
+                  <td><span class="chip chip--invented">Invented</span></td>
+                  <td>Demo flags that show the measured styling. No real meter exists.</td>
+                </tr>
+                <tr>
+                  <th scope="row">IIT Gandhinagar solar, 499 kWp</th>
+                  <td><span class="chip chip--reported">Reported</span></td>
+                  <td>Secondary sources that disagree with each other. Not verified.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Grid carbon curve</th>
+                  <td><span class="chip chip--modelled">Modelled</span></td>
+                  <td>
+                    An invented hourly shape between about 450 and 900 g CO2 per kWh. Not tied to a published
+                    factor yet.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Tariff and campaign effects</th>
+                  <td><span class="chip chip--placeholder">Placeholder</span></td>
+                  <td>Seven rupees fifty a unit, and the low, mid and high ranges above.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Participation and streaks</th>
+                  <td><span class="chip chip--invented">Invented</span></td>
+                  <td>Made up to show the ranking and the citizen view.</td>
+                </tr>
+                <tr>
+                  <th scope="row">System telemetry and the outage toggle</th>
+                  <td><span class="chip chip--simulated">Simulated</span></td>
+                  <td>Generated in the page, and labelled as such on screen.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Next: late -->
+      <section
+        class="sec sec--tight t-late sec--last"
+        id="next"
+        data-hour="23.5"
+        aria-labelledby="next-title"
+      >
+        <div class="wrap">
+          <p class="sec__meta mono"><span>23:30</span> Late · What comes next</p>
+          <h2 id="next-title" class="reveal">Next, a real service behind the map.</h2>
+          <div class="lanes">
+            <article class="reveal">
+              <h3>Built</h3>
+              <ul>
+                <li>The 3D control room for two campuses</li>
+                <li>Add a building, and a scale test that reports its own timings</li>
+                <li>Checks and CI on every pull request</li>
+              </ul>
+            </article>
+            <article class="reveal">
+              <h3>Designed, next</h3>
+              <ul>
+                <li>A FastAPI service on Postgres with idempotent ingestion</li>
+                <li>A deployed demo on a host that stays awake</li>
+                <li>A measured load test, a video and a deck</li>
+              </ul>
+            </article>
+            <article class="reveal">
+              <h3>Later</h3>
+              <ul>
+                <li>Real meter data and verified savings</li>
+                <li>More campuses, and the other LiFE themes: water, waste and more</li>
+                <li>Nudges in English, Hindi and Gujarati</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3 class="block-title reveal">Four people, four lanes</h3>
+          <div class="team reveal">
+            <div>
+              <h4>Backend and data</h4>
+              <p>The API, the schema, ingestion, the simulation model and its tests.</p>
+            </div>
+            <div>
+              <h4>The scene</h4>
+              <p>The 3D campus, the ghost split, the camera and the frame rate.</p>
+            </div>
+            <div>
+              <h4>Interface and citizen view</h4>
+              <p>Layout, charts, the resident's phone flow and accessibility.</p>
+            </div>
+            <div>
+              <h4>Infrastructure and story</h4>
+              <p>Deployment, CI, the load test, security, the deck and the video.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot t-late">
+      <div class="wrap foot__grid">
+        <div>
+          <p class="foot__cta">See it for yourself.</p>
+          <p class="actions">
+            <a class="btn" href="app/">Open the control room</a>
+            <a class="btn btn--ghost" href="https://github.com/chiragshah2357/IIT-Gandhinagar-HackCult"
+              >Read the code</a
+            >
+          </p>
+        </div>
+        <ul class="foot__links">
+          <li>
+            <a
+              href="https://github.com/chiragshah2357/IIT-Gandhinagar-HackCult/blob/main/docs/architecture.md"
+              >Architecture notes</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/chiragshah2357/IIT-Gandhinagar-HackCult/blob/main/docs/data-and-sources.md"
+              >Data and sources</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/chiragshah2357/IIT-Gandhinagar-HackCult/blob/main/LICENSE"
+              >MIT licence</a
+            >
+          </li>
+        </ul>
+        <p class="foot__fine small">
+          Built for HackCult '26, IIT Gandhinagar (Blithchron '27). Building positions and outlines are ©
+          OpenStreetMap contributors, available under the Open Database Licence. three.js (MIT) and the Spline
+          Sans, Spline Sans Mono and Newsreader fonts (SIL Open Font Licence) load from public CDNs.
+        </p>
+      </div>
+    </footer>
+
+    <script src="landing/landing.js"></script>
+  </body>
+</html>
