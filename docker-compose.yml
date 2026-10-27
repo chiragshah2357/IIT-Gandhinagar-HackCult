@@ -1,0 +1,35 @@
+# Postgres and the API, for local work:  cp .env.example .env  then  docker compose up --build
+# The API migrates and seeds the database on start, then listens on http://localhost:8000 (docs at /docs).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lifecity
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lifecity}
+      POSTGRES_DB: lifecity
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifecity -d lifecity"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      LIFECITY_DATABASE_URL: postgresql+psycopg://lifecity:${POSTGRES_PASSWORD:-lifecity}@db:5432/lifecity
+      LIFECITY_INGEST_API_KEY: ${LIFECITY_INGEST_API_KEY:?set LIFECITY_INGEST_API_KEY in .env (see .env.example)}
+      LIFECITY_CORS_ORIGINS: '["http://localhost:5191","http://localhost:8080"]'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  pgdata:

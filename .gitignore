@@ -2,3 +2,15 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.db
+
+# Local secrets
+.env
