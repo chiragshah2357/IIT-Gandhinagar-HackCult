@@ -1,11 +1,13 @@
 # Architecture
 
 Two parts: what is in this repo today, and the system it is designed to grow into. Keep them apart when you read
-this. **Section 1 is built. Section 2 is a design and none of it is implemented.**
+this. **Section 1 is built. Section 2 is a design; only its first slice (the FastAPI and Postgres service in `api/`, with
+readings ingest and the scenario simulation) is built, and it is not deployed.**
 
 ## 1. What is built: a static front end
 
-Everything runs in the browser. There is no server, database, authentication or deployed API.
+The control room runs entirely in the browser. It can also ask the API in `api/` for its simulation (section 2), and falls
+back to its own model when the API is not reachable. There is no authentication and nothing is deployed.
 
 ```mermaid
 flowchart LR
@@ -90,7 +92,7 @@ The **System** tab (service latency, readings per second, retry queue, database 
 them as simulated. Loads, the carbon curve, tariff and campaign effects are modelled; see
 [data-and-sources.md](data-and-sources.md).
 
-## 2. Target architecture (planned, not built)
+## 2. Target architecture (planned, partly built)
 
 The intended system keeps this front end and puts a real service behind it, so that a judge's input at a booth changes
 the campus.

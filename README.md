@@ -12,12 +12,16 @@ HackCult '26, IIT Gandhinagar. Track 1: Green Energy and Sustainability.
 
 ## Status: read this first
 
-This is a **front-end prototype**. It runs entirely in the browser.
+A **front-end prototype** with a small backend behind it. The control room runs on its own in the browser, and when the
+API is reachable it asks the API for the simulation and shows stored readings.
 
-- There is no backend, database, authentication or deployed API. The service design in
-  [docs/architecture.md](docs/architecture.md) (section 2) is a plan, and none of it is built.
-- Every load is **modelled** from building-type profiles. There is no meter data. The six buildings drawn as "measured"
-  are demo flags that show the styling.
+- The API ([api/](api/README.md)) is FastAPI on Postgres: buildings, an idempotent readings ingest, and the scenario
+  simulation, with a test that holds its model to the front end's. It is **not deployed**. There is no login, CSV upload,
+  baseline fitting or verified savings yet, so the rest of the service design in
+  [docs/architecture.md](docs/architecture.md) (section 2) is still a plan.
+- Every load is **modelled** from building-type profiles. No real meter data has been ingested. A building only reads
+  "measured" once readings exist for it, and the six drawn as "measured" without an API are demo flags that show the
+  styling.
 - Positions are real (OpenStreetMap). Manipal University Jaipur has real footprints. IIT Gandhinagar buildings are
   boxes at their real positions. **Heights, uses, loads, tariff, carbon curve and campaign effects are placeholders.**
 - The System tab (latency, retry queue, outage toggle) is simulated, and says so on screen.
@@ -37,6 +41,11 @@ python -m http.server 8080 --directory web
 ```
 
 Then open <http://localhost:8080> for the landing page. The control room is at <http://localhost:8080/app/>. Any static file server works; there is no build step.
+
+To run it against the API, start the API (see [api/README.md](api/README.md); `docker compose up --build` or a local
+uvicorn) and open the control room with `?api=http://localhost:8000`. On `localhost` it tries port 8000 by itself, and if
+the API is down it falls back to the in-page model and says so in the System tab. For another host, set the page's
+`lifecity-api` meta tag, and add the page's origin to `LIFECITY_CORS_ORIGINS`.
 
 ## Using it
 
@@ -69,8 +78,10 @@ web/
     styles.css          styles
     app.js              registry, simulation, rendering and UI, in ruled sections
     data/assets.js      seed table: 190 buildings (IITGN 66, MUJ 124)
+api/                    FastAPI service, Postgres schema and migrations, simulation model, tests (see api/README.md)
 scripts/check.mjs       static checks (syntax, local references, in-page anchors, pinned CDN scripts, asset table shape)
-docs/               architecture, data and sources, screenshots
+docs/                   architecture, data and sources, screenshots
+docker-compose.yml      Postgres and the API
 ```
 
 ## Checks
@@ -81,7 +92,8 @@ npm test
 ```
 
 `npm test` runs `scripts/check.mjs` and a Prettier format check. The same two steps run in GitHub Actions on every pull
-request. They do not open a browser; the app itself was exercised by hand in one.
+request. They do not open a browser; the app itself was exercised by hand in one. The API has its own workflow (ruff,
+mypy and pytest against a real Postgres), described in [api/README.md](api/README.md).
 
 ## How it is put together
 
