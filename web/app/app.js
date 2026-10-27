@@ -479,9 +479,19 @@
         return v.arr;
       }
       this.miss++;
-      const arr = this.compute(a, mask, day);
+      // The server's answer when it has one for this building, scenario and day; the in-page model otherwise.
+      const arr = Remote.arr(a, mask, day) || this.compute(a, mask, day);
       m.set(a.idx, { rev: a.rev, arr });
       return arr;
+    },
+    /* Drop everything computed for one scenario and day, so the next read uses what is current. */
+    forget(k) {
+      this.mem.delete(k);
+      const i = this.order.indexOf(k);
+      if (i >= 0) this.order.splice(i, 1);
+      [...this.tot.keys()].forEach((x) => {
+        if (x.indexOf(k + '|') === 0) this.tot.delete(x);
+      });
     },
     totals(mask = Ctx.mask, day = Ctx.day, campus = Ctx.campus) {
       const k = this.key(mask, day) + '|' + campus;
@@ -1439,7 +1449,11 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
       const tot = Sim.hits + Sim.miss || 1;
       this.queue = down ? this.queue + 380 + Math.random() * 80 : Math.max(0, this.queue * 0.55 - 20);
       this.val = [
-        down ? 310 + Math.random() * 60 : 34 + N * 0.011 + Math.random() * 7,
+        down
+          ? 310 + Math.random() * 60
+          : Remote.state === 'up' && Remote.ms.length
+            ? Remote.p95() // measured: the real latency of this page's calls to the API
+            : 34 + N * 0.011 + Math.random() * 7,
         down ? 0 : 900 + Math.random() * 1300,
         down ? 97 + Math.random() * 2 : clamp((Sim.hits / tot) * 100, 0, 99.5),
         this.queue,
@@ -1452,7 +1466,293 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
       });
     },
   };
+  /* ---------- the API: server-side simulation and real readings ---------- */
+  /*
+   * Optional. With an API configured (?api=URL, a <meta name="lifecity-api"> tag, or localhost:8000 when this
+   * page is itself on localhost), the control room asks the server to run the simulation and shows the readings
+   * stored there. Without one, or when it cannot be reached, everything runs in this page exactly as before.
+   *
+   * The server answers per building in the same 96 numbers the in-page model produces: baseline for hours 0 to
+   * 23, then the high, mid and low effect cases. So Sim.get can use either, and nothing downstream changes.
+   */
+  const IST = 5.5 * 3600e3;
+  const istHour = (d) => ((d.getTime() + IST) % 86400e3) / 3600e3;
+  const istWeekend = (d) => [0, 6].includes(new Date(d.getTime() + IST).getUTCDay());
+  const Remote = {
+    base: null,
+    state: 'off', // off | connecting | up | down
+    store: new Map(), // 'mask|day' -> Map(apiId -> Float32Array(96))
+    order: [],
+    inflight: new Map(),
+    cache: new Map(), // apiId -> { rows, at, loading, error }
+    ms: [], // latency of recent calls
+    matched: 0,
+    last: { ms: 0, cache: '', model: '' },
+    key: (mask, day) => mask + '|' + day,
+
+    configure() {
+      if (EMBED) return;
+      const param = Q.get('api'),
+        meta = document.querySelector('meta[name="lifecity-api"]'),
+        local = ['localhost', '127.0.0.1'].includes(location.hostname)
+          ? 'http://' + location.hostname + ':8000'
+          : '';
+      const raw = param !== null ? param : meta ? meta.content : local;
+      this.base = !raw || raw === 'off' ? null : raw.replace(/\/+$/, '');
+    },
+    async get(path, opts) {
+      const ctrl = new AbortController(),
+        timer = setTimeout(() => ctrl.abort(), 6000),
+        t0 = performance.now();
+      try {
+        const res = await fetch(this.base + path, Object.assign({ signal: ctrl.signal }, opts));
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const body = await res.json();
+        this.ms.push(performance.now() - t0);
+        if (this.ms.length > 30) this.ms.shift();
+        return { body, res };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    p95() {
+      const s = this.ms.slice().sort((x, y) => x - y);
+      return s.length ? s[Math.min(s.length - 1, Math.floor(s.length * 0.95))] : 0;
+    },
+
+    async start() {
+      if (!this.base) return this.paint();
+      this.state = 'connecting';
+      this.paint();
+      await this.connect();
+      setInterval(() => this.ping(), 20000);
+    },
+    async buildings() {
+      const campuses = (await this.get('/campuses')).body;
+      const lists = await Promise.all(
+        campuses.map((c) => this.get('/campuses/' + c.id + '/buildings?limit=1000')),
+      );
+      const rows = new Map();
+      lists.forEach((l) => l.body.forEach((b) => rows.set(b.ref, b)));
+      return rows;
+    },
+    async connect() {
+      try {
+        this.map(await this.buildings());
+        this.state = 'up';
+        Log.push(
+          'system',
+          'API connected at ' +
+            this.base +
+            ': ' +
+            this.matched +
+            ' of ' +
+            BASE_N +
+            ' buildings matched by name',
+        );
+        this.paint();
+        await this.want(Ctx.mask, Ctx.day);
+      } catch (err) {
+        this.fail(err);
+      }
+    },
+    /* Match the buildings drawn here to the server's, by the same stable ref the seed gives them. */
+    map(rows) {
+      const seen = {};
+      let changed = 0;
+      this.matched = 0;
+      Registry.assets.forEach((a) => {
+        if (a.added || a.campus === 'test') return;
+        const slug =
+          a.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') || 'building';
+        const k = a.campus + ':' + slug;
+        seen[k] = (seen[k] || 0) + 1;
+        const row = rows.get(k + ':' + seen[k]);
+        if (!row) return;
+        a.apiId = row.id;
+        a.apiRev = a.rev;
+        a.lastReadingAt = row.last_reading_at;
+        // Measured means the server holds readings for it. The demo flags in the seed table no longer count.
+        const measured = row.confidence === 'measured';
+        if (a.measured !== measured) changed++;
+        a.measured = measured;
+        this.matched++;
+      });
+      Shared.synced = 0;
+      Shared.sync();
+      listDirty = true;
+      return changed;
+    },
+    /* The server's answer for a building, or null so the in-page model answers. Edited buildings stay local. */
+    arr(a, mask, day) {
+      if (a.apiId == null || a.rev !== a.apiRev) return null;
+      const m = this.store.get(this.key(mask, day));
+      return (m && m.get(a.apiId)) || null;
+    },
+    want(mask, day) {
+      return this.state === 'up' && !this.store.has(this.key(mask, day))
+        ? this.load(mask, day)
+        : Promise.resolve();
+    },
+    load(mask, day) {
+      const key = this.key(mask, day);
+      if (this.inflight.has(key)) return this.inflight.get(key);
+      const job = (async () => {
+        try {
+          const campaigns = CAMP.filter((c, i) => (mask >> i) & 1).map((c) => c.key);
+          const { body, res } = await this.get('/scenarios/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ campus: 'all', campaigns, day_type: day, include_buildings: true }),
+          });
+          this.last = {
+            ms: this.ms[this.ms.length - 1],
+            cache: res.headers.get('X-Cache') || '',
+            model: body.model_version,
+          };
+          this.accept(mask, day, body);
+          Log.push(
+            'model',
+            'Simulation answered by the API in ' +
+              Math.round(this.last.ms) +
+              ' ms (' +
+              (this.last.cache || 'no cache header') +
+              '): ' +
+              body.buildings.length +
+              ' buildings, ' +
+              (campaigns.length ? campaigns.join(' + ') : 'no campaigns') +
+              ', ' +
+              day +
+              ', model ' +
+              body.model_version +
+              '.',
+          );
+          if (this.state !== 'up') {
+            this.state = 'up';
+            this.paint();
+          }
+        } catch (err) {
+          this.fail(err);
+        } finally {
+          this.inflight.delete(key);
+        }
+      })();
+      this.inflight.set(key, job);
+      return job;
+    },
+    /* Keep a response, and refresh everything that reads from it. */
+    accept(mask, day, body) {
+      const full = new Map(),
+        flat = new Map();
+      body.buildings.forEach((b) => {
+        const arr = new Float32Array(96);
+        arr.set(b.baseline_kw, 0);
+        arr.set(b.bands.high, 24);
+        arr.set(b.bands.mid, 48);
+        arr.set(b.bands.low, 72);
+        full.set(b.id, arr);
+        const plain = new Float32Array(96);
+        for (let k = 0; k < 4; k++) plain.set(b.baseline_kw, k * 24);
+        flat.set(b.id, plain);
+      });
+      // The same answer also holds the baseline, which is what "no campaigns" means for that day.
+      const kept = [[this.key(mask, day), full]];
+      if (mask) kept.push([this.key(0, day), flat]);
+      kept.forEach(([k, m]) => {
+        this.store.set(k, m);
+        this.order = this.order.filter((x) => x !== k).concat(k);
+        Sim.forget(k);
+      });
+      while (this.order.length > 6) this.store.delete(this.order.shift());
+      Sim.fill();
+      timeChanged();
+      Bus.emit('scen');
+    },
+    fail(err) {
+      const was = this.state;
+      this.state = 'down';
+      if (was !== 'down')
+        Log.push(
+          'alert',
+          'API unreachable (' + err.message + '): the model in this page is answering instead.',
+        );
+      this.paint();
+    },
+    /* Every 20 s: is it still there, did any building gain readings, and refresh the selected one's readings. */
+    async ping() {
+      try {
+        await this.get('/readyz');
+        if (this.state === 'down') return this.connect();
+        if (this.state !== 'up') return;
+        if (this.map(await this.buildings())) {
+          this.store.clear();
+          this.order = [];
+          Sim.mem.clear();
+          Sim.tot.clear();
+          Sim.order = [];
+          await this.want(Ctx.mask, Ctx.day);
+          timeChanged();
+          Log.push('asset', 'Readings arrived: measured buildings updated from the API.');
+        }
+        const sel = Ctx.sel >= 0 ? Registry.assets[Ctx.sel] : null;
+        if (sel && sel.apiId != null) this.fetchReadings(sel);
+      } catch (err) {
+        if (this.state !== 'down') this.fail(err);
+      }
+    },
+    /* The last 48 hours of readings for one building, kept for 20 s. Null until the first answer arrives. */
+    readings(a) {
+      const hit = this.cache.get(a.apiId);
+      if (!hit || (!hit.loading && performance.now() - hit.at > 20000)) this.fetchReadings(a);
+      return hit && hit.at ? hit : null;
+    },
+    async fetchReadings(a) {
+      const entry = this.cache.get(a.apiId) || { rows: [], at: 0 };
+      if (entry.loading) return;
+      entry.loading = true;
+      this.cache.set(a.apiId, entry);
+      try {
+        const from = new Date(Date.now() - 48 * 3600e3).toISOString();
+        const { body } = await this.get(
+          '/buildings/' + a.apiId + '/readings?from=' + encodeURIComponent(from) + '&limit=500',
+        );
+        entry.rows = body.map((r) => ({ t: new Date(r.ts), kw: r.kw }));
+        entry.error = null;
+      } catch (err) {
+        entry.error = err.message;
+      }
+      entry.at = performance.now();
+      entry.loading = false;
+      if (Ctx.sel === a.idx) inspector();
+    },
+    paint() {
+      const chip = $('#chipApi'),
+        s = this.state;
+      if (chip) {
+        chip.hidden = s === 'off';
+        chip.title = this.base || '';
+        chip.innerHTML =
+          '<i class="dot ' +
+          (s === 'up' ? 'ok' : s === 'down' ? 'bad' : 'warn') +
+          '"></i>' +
+          (s === 'up'
+            ? 'API connected'
+            : s === 'down'
+              ? 'API offline, model runs here'
+              : 'Connecting to the API');
+      }
+      if (typeof systemPane === 'function') systemPane();
+    },
+  };
+
+  Remote.configure();
+
   function ingestTick() {
+    // With an API configured the readings are real, so none are simulated here, even while it is unreachable.
+    if (Remote.base) return;
     if (Ctx.health === 'down') {
       Log.push(
         'ingest',
@@ -1483,7 +1783,7 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
     Bus.emit('svc');
   }, 1600);
   setInterval(() => {
-    if (document.hidden || Math.random() > 0.35) return;
+    if (document.hidden || Remote.base || Math.random() > 0.35) return; // invented alerts: offline demo only
     const ms = Registry.assets.filter((a) => a.measured),
       a = ms[Math.floor(Math.random() * ms.length)];
     if (a && Ctx.health === 'ok')
@@ -2170,6 +2470,7 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
   let flowDirty = true,
     listDirty = true;
   function scenarioChanged(why) {
+    Remote.want(Ctx.mask, Ctx.day); // ask the server too; the in-page model answers until it replies
     const t0 = performance.now();
     Sim.fill();
     const ms = performance.now() - t0;
@@ -2702,6 +3003,7 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
       return;
     }
     const a = Registry.assets[i],
+      live = Remote.state === 'up' && a.apiId != null, // this building is on the server
       A2 = ARCH[a.arch],
       b = Sim.kw(a, 0, Ctx.t),
       l = Sim.kw(a, 1, Ctx.t),
@@ -2772,15 +3074,22 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
       '</dd><dt>revision</dt><dd>' +
       a.rev +
       '</dd></dl></div>' +
+      (live ? readingsCard(a) : '') +
       '<div class="card"><span class="lbl">Data lineage</span><div class="foot" style="display:block;line-height:1.6">' +
-      (a.measured
-        ? 'Meter feed on the ingestion API (demo flag). Baseline fitted on weather-normalised history. Last reading 4 s ago, simulated.'
-        : 'No meter. Estimated from the ' +
-          A2.label.toLowerCase() +
-          ' archetype and floor area. Becomes measured when readings arrive.') +
+      (live
+        ? a.measured
+          ? 'The API holds readings for this building. The load drawn above is still the modelled one: readings are stored and shown, but not yet used to fit the model.'
+          : 'No readings stored. The load is estimated from the ' +
+            A2.label.toLowerCase() +
+            ' archetype and floor area, and this turns measured once readings are posted to the API.'
+        : a.measured
+          ? 'Meter feed on the ingestion API (demo flag). Baseline fitted on weather-normalised history. Last reading 4 s ago, simulated.'
+          : 'No meter. Estimated from the ' +
+            A2.label.toLowerCase() +
+            ' archetype and floor area. Becomes measured when readings arrive.') +
       '</div></div>' +
       '<div class="row"><button class="btn" id="btnFly">Fly to</button><button class="btn" id="btnClr">Clear selection</button>' +
-      (a.measured ? '' : '<button class="btn pri" id="btnMeter">Connect a meter (demo)</button>') +
+      (a.measured || live ? '' : '<button class="btn pri" id="btnMeter">Connect a meter (demo)</button>') +
       '</div>';
     const arr = Sim.get(a),
       bb = Array.from(arr.slice(0, 24)),
@@ -2798,10 +3107,86 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
           ]
         : [{ y: bb, c: '#A9A08E', w: 1.6 }],
     });
+    if (live) drawReadings(a);
     $('#btnFly').onclick = () => flyAsset(a);
     const bm = $('#btnMeter');
     if (bm) bm.onclick = () => connectMeter(a);
     $('#btnClr').onclick = () => setSelection(-1, false);
+  }
+
+  /* Readings stored on the API for the selected building, set against the model for the same hours. */
+  function readingsCard(a) {
+    const r = Remote.readings(a),
+      note = (t) => '<div class="foot" style="display:block;line-height:1.6">' + t + '</div>';
+    let body;
+    if (!r) body = note('Loading readings from the API…');
+    else if (r.error) body = note('Could not read from the API: ' + esc(r.error) + '.');
+    else if (!r.rows.length)
+      body = note(
+        'No readings in the last 48 hours. Post some to <span class="mono">POST /readings:batch</span> with building_id ' +
+          '<span class="mono">' +
+          a.apiId +
+          '</span> and this building turns measured.',
+      );
+    else {
+      const last = r.rows[r.rows.length - 1],
+        day = istWeekend(last.t) ? 'weekend' : 'weekday',
+        model = Sim.get(a, 0, day)[Math.floor(istHour(last.t)) % 24],
+        diff = Math.round(((last.kw - model) / (model || 1)) * 100);
+      body =
+        '<dl class="kv"><dt>readings, last 48 h</dt><dd>' +
+        r.rows.length +
+        '</dd><dt>latest</dt><dd>' +
+        fmtKW(last.kw) +
+        ' · ' +
+        last.t.toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }) +
+        '</dd><dt>model, same hour</dt><dd>' +
+        fmtKW(model) +
+        ' (' +
+        (diff > 0 ? '+' : '') +
+        diff +
+        '% off)</dd></dl><canvas class="plot" id="rdplot" style="height:96px"></canvas>' +
+        note(
+          'Dots are readings by hour of the day, India time, on a ' + Ctx.day + '. The line is the model.',
+        );
+    }
+    return '<div class="card"><span class="lbl">Readings from the API</span>' + body + '</div>';
+  }
+  function drawReadings(a) {
+    const r = Remote.readings(a),
+      cv = $('#rdplot');
+    if (!r || !cv) return;
+    const model = Array.from(Sim.get(a, 0, Ctx.day).slice(0, 24)),
+      pts = r.rows.filter((x) => (istWeekend(x.t) ? 'weekend' : 'weekday') === Ctx.day),
+      ymax = Math.max(...model, ...pts.map((x) => x.kw), 1) * 1.1;
+    plot(cv, {
+      ymax,
+      fmt: fmtKW,
+      l: 44,
+      heat: false,
+      solar: false,
+      series: [{ y: model, c: '#A9A08E', w: 1.6 }],
+    });
+    const W = cv.clientWidth,
+      H = cv.clientHeight,
+      L = 44,
+      Tt = 8,
+      pw = W - L - 8,
+      ph = H - Tt - 18,
+      g = cv.getContext('2d');
+    g.fillStyle = '#E0A93B';
+    pts.forEach((x) => {
+      g.beginPath();
+      g.arc(L + (istHour(x.t) / 24) * pw, Tt + ph - (x.kw / ymax) * ph, 3, 0, 7);
+      g.fill();
+    });
   }
 
   function connectMeter(a) {
@@ -3136,7 +3521,27 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
       Math.round((Sim.hits / (Sim.hits + Sim.miss || 1)) * 100) +
       '% hits</dd><dt>last totals pass</dt><dd>' +
       Sim.lastMs.toFixed(1) +
-      ' ms</dd></dl>';
+      ' ms</dd><dt>simulation by</dt><dd>' +
+      (Remote.state === 'up' ? 'the API' : 'this page') +
+      '</dd>' +
+      (Remote.state === 'up'
+        ? '<dt>API answer</dt><dd>' +
+          Math.round(Remote.last.ms) +
+          ' ms · ' +
+          (Remote.last.cache || '-') +
+          '</dd><dt>API p95</dt><dd>' +
+          Math.round(Remote.p95()) +
+          ' ms</dd><dt>buildings matched</dt><dd>' +
+          Remote.matched +
+          ' of ' +
+          BASE_N +
+          '</dd><dt>model</dt><dd>' +
+          esc(Remote.last.model || '-') +
+          '</dd>'
+        : Remote.state === 'down'
+          ? '<dt>API</dt><dd>unreachable</dd>'
+          : '') +
+      '</dl>';
   }
   $('#btnChaos').addEventListener('click', () => {
     Ctx.health = Ctx.health === 'ok' ? 'down' : 'ok';
@@ -3481,6 +3886,7 @@ void main(){float d=length(vUv-.5)*2.;float a=pow(clamp(1.-d,0.,1.),2.4);float L
   buildRows();
   A.resize();
   B.resize();
+  Remote.start();
   if (EMBED) {
     // Same-origin parents can pause the scene while it is off screen.
     window.addEventListener('message', (e) => {

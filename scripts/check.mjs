@@ -1,7 +1,7 @@
-// Static checks for the control room at web/app/.
+// Static checks for the site: the landing page at web/ and the control room at web/app/.
 // No browser and no dependencies:
 //   1. every script parses
-//   2. the page only references local files that exist, and every in-page anchor has a target
+//   2. both pages only reference local files that exist, and every in-page anchor has a target
 //   3. CDN scripts are pinned to an exact version and carry an integrity hash
 //   4. the asset table is well formed (shape, types, known archetypes and campuses, outlines)
 import { existsSync, readFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const read = (file) => readFileSync(join(web, file), 'utf8');
 const problems = [];
 const fail = (message) => problems.push(message);
 
-for (const file of ['app/app.js', 'app/data/assets.js']) {
+for (const file of ['app/app.js', 'app/data/assets.js', 'landing/landing.js']) {
   try {
     new vm.Script(read(file), { filename: file });
   } catch (error) {
@@ -22,7 +22,7 @@ for (const file of ['app/app.js', 'app/data/assets.js']) {
   }
 }
 
-for (const page of ['app/index.html']) {
+for (const page of ['index.html', 'app/index.html']) {
   const html = read(page);
   const dir = dirname(page);
   for (const [, ref] of html.matchAll(/(?:src|href)="([^":#?]+)"/g)) {
